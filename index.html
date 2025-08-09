@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Study Buddy — Fixed</title>
+<style>
+  :root{--bg1:#fbc2eb;--bg2:#a6c1ee;--accent1:#6a11cb;--accent2:#2575fc;--card:#fff;--muted:#6b7280}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#111}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px}
+  .brand{display:flex;gap:14px;align-items:center}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+  h1{margin:0;color:#fff;font-size:20px}
+  nav.tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  nav button.tab{background:transparent;border:0;color:rgba(255,255,255,0.95);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  nav button.tab.active{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff}
+  main{max-width:1100px;margin:18px auto;padding:16px}
+  .panel{background:var(--card);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(46,49,65,0.06)}
+  .hide{display:none}
+  .row{display:flex;gap:8px;align-items:center}
+  input,select,textarea,button{font-family:inherit}
+  input[type="text"],input[type="time"],input[type="date"],input[type="number"],select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #eef0ff;margin-top:6px;background:linear-gradient(180deg,#fff,#fbfbff)}
+  .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;cursor:pointer;font-weight:700}
+  .btn.ghost{background:transparent;color:var(--accent1);border:1px solid rgba(39,78,255,0.08)}
+  .muted{color:var(--muted);font-size:13px}
+  .item{padding:10px;border-radius:8px;border:1px solid #f0f1ff;margin-bottom:8px;background:linear-gradient(90deg,#fff,#f8f9ff);display:flex;justify-content:space-between;align-items:center}
+  ul.list{list-style:none;padding:0;margin:0}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;border-bottom:1px solid #f3f4ff;text-align:left}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal.hide{display:none}
+  .modal-box{background:var(--card);padding:18px;border-radius:12px;max-width:460px;width:92%;text-align:center}
+  footer{padding:12px;text-align:center;color:#fff;font-size:13px}
+  @media (max-width:720px){ .row{flex-direction:column} }
+  .small{font-size:13px;color:#666}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">SB</div>
+    <div>
+      <h1>Study Buddy</h1>
+      <div class="small" style="color:rgba(255,255,255,0.9)">All features — single file (fixed)</div>
+    </div>
+  </div>
+  <div>
+    <button id="globalStop" class="btn" style="background:#ff5c6c">Stop Sound</button>
+  </div>
+</header>
+
+<nav class="tabs" style="padding:0 18px 12px 18px">
+  <button class="tab active" data-target="home">Home</button>
+  <button class="tab" data-target="timetable">Time Table</button>
+  <button class="tab" data-target="timer">Study Timer</button>
+  <button class="tab" data-target="alarm">Alarm</button>
+  <button class="tab" data-target="tracker">Class Tracker</button>
+  <button class="tab" data-target="calendar">Calendar</button>
+  <button class="tab" data-target="notepad">Notepad</button>
+  <button class="tab" data-target="quote">Quotes</button>
+  <button class="tab" data-target="browser">Browser</button>
+  <button class="tab" data-target="beats">40Hz Beats</button>
+</nav>
+
+<main>
+  <!-- HOME -->
+  <section id="home" class="panel">
+    <h2>Welcome — Study Buddy</h2>
+    <p class="muted">Click a tab. Audio will play only after you start/preview — no auto-play on load.</p>
+  </section>
+
+  <!-- TIMETABLE -->
+  <section id="timetable" class="panel hide">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>🗓 Time Table</h2> <div class="muted">Saved locally</div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <input id="tt-subject" placeholder="Subject (e.g., Maths)">
+      <select id="tt-day"><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select>
+      <input id="tt-time" placeholder="09:00 - 10:00">
+      <button class="btn" id="tt-add">Add</button>
+    </div>
+    <div id="tt-list" style="margin-top:12px"></div>
+    <div style="margin-top:8px"><button class="btn ghost" id="tt-clear">Clear All</button></div>
+  </section>
+
+  <!-- TIMER -->
+  <section id="timer" class="panel hide">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>⏱ Study Timer</h2>
+      <div class="muted">Session & break with auto-switch</div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <label style="flex:1">Session (min)<input id="timer-session" type="number" min="1" value="25"></label>
+      <label style="flex:1">Break (min)<input id="timer-break" type="number" min="1" value="5"></label>
+      <div style="flex:1">
+        <label>Ringtone</label>
+        <select id="ring-select"></select>
+        <div style="margin-top:6px;display:flex;gap:8px">
+          <button class="btn ghost" id="preview">Preview</button>
+          <label class="btn ghost" style="cursor:pointer">Upload<input id="upload" type="file" accept="audio/*" style="display:none"></label>
+        </div>
+      </div>
+    </div>
+
+    <div id="timer-display" style="font-size:48px;margin:18px 0;text-align:center">25:00</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="start">Start</button>
+      <button class="btn ghost" id="pause">Pause</button>
+      <button class="btn ghost" id="reset">Reset</button>
+      <div style="margin-left:auto" class="muted">Mode: <span id="mode">Session</span></div>
+    </div>
+
+    <h3 style="margin-top:16px">Active Timers</h3>
+    <ul id="timers-list" class="list"></ul>
+  </section>
+
+  <!-- ALARM -->
+  <section id="alarm" class="panel hide">
+    <h2>⏰ Alarm</h2>
+    <div class="row" style="margin-top:12px">
+      <input id="alarm-time" type="time">
+      <select id="ring-select-alarm"></select>
+      <label class="btn ghost" style="cursor:pointer">Upload<input id="upload-alarm" type="file" accept="audio/*" style="display:none"></label>
+      <button class="btn" id="alarm-set">Set</button>
+      <button class="btn ghost" id="alarm-cancel">Cancel</button>
+    </div>
+    <div style="margin-top:8px" class="muted" id="alarm-status">No alarm set</div>
+
+    <h3 style="margin-top:12px">Scheduled Alarms</h3>
+    <ul id="alarms-list" class="list"></ul>
+  </section>
+
+  <!-- TRACKER -->
+  <section id="tracker" class="panel hide">
+    <h2>📚 Class Tracker</h2>
+    <div class="row" style="margin-top:10px">
+      <input id="trk-subject" placeholder="Class/Subject">
+      <input id="trk-date" type="date">
+      <input id="trk-notes" placeholder="Notes (optional)">
+      <button class="btn" id="trk-add">Add</button>
+    </div>
+    <table style="margin-top:12px"><thead><tr><th>Subject</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead><tbody id="trk-body"></tbody></table>
+    <div style="margin-top:10px"><button class="btn ghost" id="trk-clear">Clear</button></div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section id="calendar" class="panel hide">
+    <h2>📅 Calendar</h2>
+    <div class="row" style="margin-top:10px">
+      <input id="cal-date" type="date">
+      <input id="cal-title" placeholder="Event title">
+      <button class="btn" id="cal-add">Mark</button>
+    </div>
+    <div id="cal-list" style="margin-top:12px"></div>
+    <div style="margin-top:10px"><button class="btn ghost" id="cal-clear">Clear All</button></div>
+  </section>
+
+  <!-- NOTEPAD -->
+  <section id="notepad" class="panel hide">
+    <h2>📝 Notepad</h2>
+    <textarea id="note-pad" style="width:100%;height:220px;padding:12px;border-radius:10px;border:1px solid #eef0ff"></textarea>
+    <div style="margin-top:8px"><button class="btn" id="note-save">Save</button><button class="btn ghost" id="note-clear">Clear</button><button class="btn ghost" id="note-download">Download</button></div>
+  </section>
+
+  <!-- QUOTES -->
+  <section id="quote" class="panel hide">
+    <h2>💡 Motivational Quotes</h2>
+    <blockquote id="quote-text" style="font-size:20px;margin-top:12px">"Small steps every day lead to big results."</blockquote>
+    <div style="margin-top:12px"><button class="btn" id="quote-new">New Quote</button></div>
+  </section>
+
+  <!-- BROWSER -->
+  <section id="browser" class="panel hide">
+    <h2>🌐 Mini Browser</h2>
+    <div class="row"><input id="br-url" placeholder="example.com or https://example.com"><button class="btn" id="br-go">Go</button><button class="btn ghost" id="br-open">Open</button></div>
+    <div class="muted" style="margin-top:8px">Some sites block embedding.</div>
+    <iframe id="br-frame" src="about:blank" style="width:100%;height:360px;border-radius:10px;border:1px solid #eef0ff;margin-top:10px"></iframe>
+  </section>
+
+  <!-- BEATS -->
+  <section id="beats" class="panel hide">
+    <h2>🎧 40Hz Binaural Beats</h2>
+    <p class="muted">Play for focused background audio.</p>
+    <iframe width="100%" height="360" src="https://www.youtube.com/embed/1_G60OdEzXs?rel=0" frameborder="0" allowfullscreen style="border-radius:10px"></iframe>
+  </section>
+</main>
+
+<footer>Study Buddy • Local-first • No AI</footer>
+
+<!-- Modal -->
+<div id="ring-modal" class="modal hide" aria-hidden="true">
+  <div class="modal-box">
+    <h3 id="ring-modal-title">Time's up!</h3>
+    <p id="ring-modal-text">Your timer/alarm is ringing.</p>
+    <div style="margin-top:12px"><button class="btn" id="ring-stop">Stop</button></div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+   LocalStorage keys & helpers
+   --------------------------- */
+const LS = {
+  TIMERS: 'sb_timers_v2',
+  ALARMS: 'sb_alarms_v2',
+  TT: 'sb_tt_v2',
+  TRACKER: 'sb_tracker_v2',
+  CAL: 'sb_cal_v2',
+  NOTES: 'sb_notes_v2',
+  RING_CUSTOM: 'sb_ring_custom_v2',
+  RING_SELECTED: 'sb_ring_selected_v2'
+};
+function uid(prefix='id'){ return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+
+/* ---------------------------
+   Ringtone module (builtins + upload)
+   --------------------------- */
+const Ringtones = (function(){
+  const builtins = [
+    {id:'bell', label:'Bell', url:'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg'},
+    {id:'beep', label:'Beep', url:'https://actions.google.com/sounds/v1/alarms/beep_short.ogg'},
+    {id:'tone', label:'Tone', url:'https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg'}
+  ];
+  function populate(selectEl){
+    if(!selectEl) return;
+    selectEl.innerHTML='';
+    builtins.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.label; selectEl.appendChild(o); });
+    if(localStorage.getItem(LS.RING_CUSTOM)){ const o=document.createElement('option'); o.value='custom'; o.textContent='Custom (uploaded)'; selectEl.appendChild(o); }
+    const saved = localStorage.getItem(LS.RING_SELECTED) || builtins[0].id;
+    selectEl.value = saved;
+  }
+  function getUrl(id){
+    if(!id) return null;
+    if(id === 'custom') return localStorage.getItem(LS.RING_CUSTOM) || null;
+    const f = builtins.find(x=>x.id===id); return f?f.url:null;
+  }
+  function saveCustomFromInput(inputEl){
+    return new Promise((res,rej)=>{
+      const f = inputEl.files && inputEl.files[0];
+      if(!f) return res(null);
+      if(!f.type.startsWith('audio/')) return rej(new Error('Not an audio file'));
+      const r = new FileReader();
+      r.onload = e=>{ localStorage.setItem(LS.RING_CUSTOM, e.target.result); res(e.target.result); };
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
+  }
+  function saveSelected(id){ if(id) localStorage.setItem(LS.RING_SELECTED, id); }
+  return {populate,getUrl,saveCustomFromInput,saveSelected};
+})();
+
+/* ---------------------------
+   Player (single audio instance)
+   --------------------------- */
+const Player = (function(){
+  let audio = null;
+  function create(src){
+    if(!src) return null;
+    try{ const a = new Audio(src); a.preload='auto'; return a; }catch(e){ console.error(e); return null; }
+  }
+  return {
+    playLoop(src){
+      this.stop();
+      audio = create(src); if(!audio) return false;
+      audio.loop = true;
+      audio.play().catch(()=> alert('Playback blocked — click Start/Preview to enable audio.'));
+      return true;
+    },
+    playOnce(src){
+      this.stop();
+      audio = create(src); if(!audio) return false;
+      audio.loop = false;
+      audio.play().catch(()=> alert('Playback blocked — click Start/Preview to enable audio.'));
+      return true;
+    },
+    stop(){
+      if(audio){ try{ audio.pause(); audio.currentTime = 0; }catch(e){} audio=null; }
+    }
+  };
+})();
+
+/* ---------------------------
+   Modal & stop controls
+   --------------------------- */
+const modal = document.getElementById('ring-modal');
+function showModal(title,text){
+  document.getElementById('ring-modal-title').textContent = title || "Time's up!";
+  document.getElementById('ring-modal-text').textContent = text || '';
+  modal.classList.remove('hide');
+  modal.setAttribute('aria-hidden','false');
+}
+function hideModal(){
+  Player.stop();
+  modal.classList.add('hide');
+  modal.setAttribute('aria-hidden','true');
+}
+document.getElementById('ring-stop').addEventListener('click', ()=> hideModal());
+document.getElementById('globalStop').addEventListener('click', ()=> {
+  Player.stop();
+  // do not clear saved scheduled alarms/timers here — only stop the sound.
+  hideModal();
+});
+
+/* ---------------------------
+   Tab navigation
+   --------------------------- */
+(function(){
+  const tabs = document.querySelectorAll('nav.tabs button.tab');
+  function activate(btn){
+    tabs.forEach(b=>b.classList.toggle('active', b===btn));
+    const target = btn.dataset.target;
+    document.querySelectorAll('main section').forEach(sec=>sec.classList.add('hide'));
+    const el = document.getElementById(target);
+    if(el) el.classList.remove('hide');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(btn=>btn.addEventListener('click', ()=>activate(btn)));
+})();
+
+/* ---------------------------
+   Timetable (local)
+   --------------------------- */
+(function(){
+  const KEY = LS.TT;
+  const subj = document.getElementById('tt-subject'), day = document.getElementById('tt-day'), tIn = document.getElementById('tt-time'), addBtn = document.getElementById('tt-add'), listEl = document.getElementById('tt-list'), clearBtn = document.getElementById('tt-clear');
+  function render(){
+    const data = JSON.parse(localStorage.getItem(KEY) || '{}');
+    listEl.innerHTML = '';
+    ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d=>{
+      const arr = data[d] || [];
+      const header = document.createElement('div'); header.className='item'; header.innerHTML=`<div style="font-weight:700">${d}</div><div class="muted">${arr.length} entries</div>`; listEl.appendChild(header);
+      arr.forEach((it,i)=>{ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div><strong>${it.subject}</strong><div class="muted">${it.time}</div></div><div><button class="btn ghost" data-day="${d}" data-i="${i}">Delete</button></div>`; listEl.appendChild(el); });
+    });
+    listEl.querySelectorAll('button[data-day]').forEach(b=>b.addEventListener('click', ()=>{
+      const d=b.dataset.day, i=Number(b.dataset.i), data = JSON.parse(localStorage.getItem(KEY)||'{}');
+      if(data[d]) { data[d].splice(i,1); localStorage.setItem(KEY, JSON.stringify(data)); render(); }
+    }));
+  }
+  addBtn.addEventListener('click', ()=>{
+    const s = subj.value.trim(), ti = tIn.value.trim(), d=day.value;
+    if(!s||!ti) return alert('Enter subject and time');
+    const data = JSON.parse(localStorage.getItem(KEY)||'{}'); if(!data[d]) data[d]=[]; data[d].push({subject:s,time:ti}); localStorage.setItem(KEY,JSON.stringify(data)); subj.value=''; tIn.value=''; render();
+  });
+  clearBtn.addEventListener('click', ()=>{ if(confirm('Clear timetable?')){ localStorage.removeItem(KEY); render(); } });
+  render();
+})();
+
+/* ---------------------------
+   Timer logic (no auto-run)
+   --------------------------- */
+(function(){
+  const sel = document.getElementById('ring-select'), upload = document.getElementById('upload'), previewBtn = document.getElementById('preview');
+  const startBtn = document.getElementById('start'), pauseBtn = document.getElementById('pause'), resetBtn = document.getElementById('reset');
+  const display = document.getElementById('timer-display'), modeLabel = document.getElementById('mode');
+  const sessionInput = document.getElementById('timer-session'), breakInput = document.getElementById('timer-break');
+  const activeList = document.getElementById('timers-list');
+  let intervalId = null, seconds = 0, mode = 'session';
+
+  // populate ringtone selects
+  Ringtones.populate(sel);
+  const selAlarm = document.getElementById('ring-select-alarm');
+  if(selAlarm) selAlarm.innerHTML = sel.innerHTML;
+
+  upload.addEventListener('change', ()=>{
+    Ringtones.saveCustomFromInput(upload).then(()=>{
+      Ringtones.populate(sel); if(selAlarm) selAlarm.innerHTML = sel.innerHTML; sel.value='custom'; if(selAlarm) selAlarm.value='custom'; Ringtones.saveSelected('custom'); alert('Custom ringtone saved.');
+    }).catch(e=>alert('Upload failed: '+(e.message||e)));
+  });
+
+  previewBtn.addEventListener('click', ()=>{
+    const url = Ringtones.getUrl(sel.value);
+    if(!url) return alert('No ringtone');
+    Player.playOnce(url);
+    setTimeout(()=>Player.stop(),3500);
+  });
+
+  function updateDisplay(){ const m=Math.floor(seconds/60), s=seconds%60; display.textContent = `${m}:${s<10?'0':''}${s}`; modeLabel.textContent = (mode==='session'?'Session':'Break'); }
+
+  startBtn.addEventListener('click', ()=>{
+    // probe audio (unlock)
+    const p = Ringtones.getUrl(sel.value); if(p){ Player.playOnce(p); Player.stop(); }
+    if(intervalId) return;
+    const sess=Math.max(1, Number(sessionInput.value)||25), br=Math.max(1, Number(breakInput.value)||5);
+    if(seconds === 0) seconds = sess*60;
+    intervalId = setInterval(()=>{
+      if(seconds>0){ seconds--; updateDisplay(); } else {
+        clearInterval(intervalId); intervalId=null;
+        const url = Ringtones.getUrl(sel.value);
+        if(url){ Player.playLoop(url); showModal("Time's up!","Your study session has finished."); } else alert("Time's up!");
+        // add to active timers list as completed (optional)
+        // switch modes
+        if(mode === 'session'){ mode='break'; seconds = br*60; } else { mode='session'; seconds = sess*60; }
+        updateDisplay();
+      }
+    },1000);
+    // add scheduled entry to UI (list)
+    const itemId = uid('timer');
+    const li = document.createElement('li'); li.id = itemId;
+    li.innerHTML = `<div><strong>Timer</strong> — ${sessionInput.value} min (mode:${mode})</div><div><button class="btn ghost" data-id="${itemId}">Delete</button></div>`;
+    activeList.appendChild(li);
+    li.querySelector('button').addEventListener('click', ()=>{ li.remove(); });
+  });
+
+  pauseBtn.addEventListener('click', ()=>{ if(intervalId){ clearInterval(intervalId); intervalId=null; } });
+  resetBtn.addEventListener('click', ()=>{ if(intervalId){ clearInterval(intervalId); intervalId=null; } seconds = Number(sessionInput.value)*60 || 1500; mode='session'; updateDisplay(); Player.stop(); hideModal(); });
+
+  // initialize display
+  seconds = Number(sessionInput.value) * 60 || 1500; updateDisplay();
+})();
+
+/* ---------------------------
+   Alarm scheduling (single-timeouts stored in list)
+   --------------------------- */
+(function(){
+  const selAlarm = document.getElementById('ring-select-alarm'), uploadAlarm = document.getElementById('upload-alarm');
+  Ringtones.populate(selAlarm);
+  // copy from timer select if changed
+  const selTimer = document.getElementById('ring-select');
+  if(selTimer){ selAlarm.innerHTML = selTimer.innerHTML; }
+
+  uploadAlarm.addEventListener('change', ()=>{
+    Ringtones.saveCustomFromInput(uploadAlarm).then(()=>{ Ringtones.populate(selAlarm); if(selTimer) selTimer.innerHTML = selAlarm.innerHTML; selAlarm.value='custom'; if(selTimer) selTimer.value='custom'; alert('Custom ringtone saved.'); }).catch(e=>alert('Upload failed: '+(e.message||e)));
+  });
+
+  const setBtn = document.getElementById('alarm-set'), cancelBtn = document.getElementById('alarm-cancel');
+  const timeInput = document.getElementById('alarm-time');
+  const listEl = document.getElementById('alarms-list'), status = document.getElementById('alarm-status');
+  const scheduled = {}; // map id -> timeoutId
+
+  setBtn.addEventListener('click', ()=>{
+    const t = timeInput.value;
+    if(!t) return alert('Pick alarm time');
+    const [h,m] = t.split(':').map(Number);
+    const now = new Date();
+    const alarm = new Date(); alarm.setHours(h,m,0,0);
+    if(alarm <= now) alarm.setDate(alarm.getDate()+1);
+    const ms = alarm.getTime() - now.getTime();
+    const id = uid('alarm');
+    const timeoutId = setTimeout(()=>{
+      const url = Ringtones.getUrl(selAlarm.value);
+      if(url){ Player.playLoop(url); showModal('Alarm ringing!', 'Your alarm is ringing.'); } else alert('Alarm ringing!');
+      delete scheduled[id]; updateStatus();
+    }, ms);
+    scheduled[id] = timeoutId;
+    // append to list
+    const li = document.createElement('li'); li.id = id;
+    li.innerHTML = `<div><strong>Alarm</strong> — ${alarm.toLocaleString()}</div><div><button class="btn ghost" data-id="${id}">Delete</button></div>`;
+    listEl.appendChild(li);
+    li.querySelector('button').addEventListener('click', ()=>{
+      const idd = li.querySelector('button').dataset.id;
+      if(scheduled[idd]) { clearTimeout(scheduled[idd]); delete scheduled[idd]; }
+      li.remove(); updateStatus();
+    });
+    updateStatus();
+    alert('Alarm set for ' + alarm.toLocaleString());
+  });
+
+  cancelBtn.addEventListener('click', ()=>{
+    // clear all scheduled alarms
+    Object.keys(scheduled).forEach(k => { clearTimeout(scheduled[k]); delete scheduled[k]; });
+    listEl.innerHTML = '';
+    updateStatus();
+    Player.stop();
+    hideModal();
+  });
+
+  function updateStatus(){
+    const keys = Object.keys(scheduled);
+    status.textContent = keys.length ? `${keys.length} alarm(s) scheduled` : 'No alarm set';
+  }
+})();
+
+/* ---------------------------
+   Class tracker
+   --------------------------- */
+(function(){
+  const KEY = LS.TRACKER;
+  const tbody = document.getElementById('trk-body');
+  const sIn = document.getElementById('trk-subject'), dIn = document.getElementById('trk-date'), nIn = document.getElementById('trk-notes');
+  document.getElementById('trk-add').addEventListener('click', ()=>{
+    const s = sIn.value.trim(), d = dIn.value, n = nIn.value.trim();
+    if(!s || !d) return alert('Enter subject and date');
+    const arr = JSON.parse(localStorage.getItem(KEY)||'[]'); arr.push({subject:s,date:d,notes:n}); localStorage.setItem(KEY,JSON.stringify(arr)); sIn.value=''; dIn.value=''; nIn.value=''; load();
+  });
+  document.getElementById('trk-clear').addEventListener('click', ()=>{ if(confirm('Clear classes?')){ localStorage.removeItem(KEY); load(); }});
+  function load(){
+    const arr = JSON.parse(localStorage.getItem(KEY)||'[]'); tbody.innerHTML=''; arr.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.subject}</td><td>${r.date}</td><td>${r.notes||''}</td><td><button class="btn ghost" data-i="${i}">Del</button></td>`; tbody.appendChild(tr); });
+    tbody.querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click', ()=>{ const i=Number(b.dataset.i); const arr=JSON.parse(localStorage.getItem(KEY)||'[]'); arr.splice(i,1); localStorage.setItem(KEY,JSON.stringify(arr)); load(); }));
+  }
+  load();
+})();
+
+/* ---------------------------
+   Calendar
+   --------------------------- */
+(function(){
+  const KEY = LS.CAL, list = document.getElementById('cal-list');
+  document.getElementById('cal-add').addEventListener('click', ()=>{ const d=document.getElementById('cal-date').value, t=document.getElementById('cal-title').value.trim(); if(!d||!t) return alert('Pick date and title'); const arr = JSON.parse(localStorage.getItem(KEY)||'[]'); arr.push({date:d,title:t}); localStorage.setItem(KEY,JSON.stringify(arr)); document.getElementById('cal-title').value=''; render(); });
+  document.getElementById('cal-clear').addEventListener('click', ()=>{ if(confirm('Clear events?')){ localStorage.removeItem(KEY); render(); }});
+  function render(){ const arr = JSON.parse(localStorage.getItem(KEY)||'[]'); list.innerHTML=''; if(arr.length===0){ list.innerHTML='<div class="muted">No important dates</div>'; return; } arr.forEach((e,i)=>{ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div><strong>${e.title}</strong><div class="muted">${e.date}</div></div><div><button class="btn ghost" data-i="${i}">Delete</button></div>`; list.appendChild(el); }); list.querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click', ()=>{ const i=Number(b.dataset.i); const arr = JSON.parse(localStorage.getItem(KEY)||'[]'); arr.splice(i,1); localStorage.setItem(KEY,JSON.stringify(arr)); render(); })); }
+  render();
+})();
+
+/* ---------------------------
+   Notepad
+   --------------------------- */
+(function(){
+  const KEY = LS.NOTES, ta = document.getElementById('note-pad');
+  ta.value = localStorage.getItem(KEY) || '';
+  setInterval(()=> localStorage.setItem(KEY, ta.value), 2000);
+  document.getElementById('note-save').addEventListener('click', ()=>{ localStorage.setItem(KEY, ta.value); alert('Saved'); });
+  document.getElementById('note-clear').addEventListener('click', ()=>{ if(confirm('Clear note?')){ ta.value=''; localStorage.removeItem(KEY); }});
+  document.getElementById('note-download').addEventListener('click', ()=>{ const blob=new Blob([ta.value],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='notes.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+})();
+
+/* ---------------------------
+   Quotes
+   --------------------------- */
+(function(){ const arr=["Don’t watch the clock; do what it does. Keep going.","Push yourself; no one else will do it for you.","Small steps every day lead to big results.","Strive for progress, not perfection."]; document.getElementById('quote-new').addEventListener('click', ()=> document.getElementById('quote-text').textContent = arr[Math.floor(Math.random()*arr.length)]); })();
+
+/* ---------------------------
+   Mini Browser
+   --------------------------- */
+(function(){ const inp=document.getElementById('br-url'), frame=document.getElementById('br-frame'); document.getElementById('br-go').addEventListener('click', ()=>{ let v=inp.value.trim(); if(!v) return; if(!/^https?:\/\//i.test(v)) v='https://'+v; frame.src = v; }); document.getElementById('br-open').addEventListener('click', ()=>{ let v=inp.value.trim(); if(!v) return; if(!/^https?:\/\//i.test(v)) v='https://'+v; window.open(v,'_blank'); }); })();
+
+/* ---------------------------
+   Init: populate ringtone selects
+   --------------------------- */
+(function(){
+  const s = document.getElementById('ring-select'), s2 = document.getElementById('ring-select-alarm');
+  Ringtones.populate(s);
+  if(s2) s2.innerHTML = s.innerHTML;
+  // try restoring selected value
+  const sel = localStorage.getItem(LS.RING_SELECTED);
+  if(sel){ if(s) s.value = sel; if(s2) s2.value = sel; }
+})();
+</script>
+</body>
+</html>
